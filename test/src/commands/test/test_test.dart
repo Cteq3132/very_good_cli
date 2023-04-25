@@ -26,6 +26,13 @@ const expectedTestUsage = [
       '''    --exclude-coverage                A glob which will be used to exclude files that match from the coverage.\n'''
       '''-x, --exclude-tags                    Run only tests that do not have the specified tags.\n'''
       '''    --min-coverage                    Whether to enforce a minimum coverage percentage.\n'''
+      '''    --golden-threshold                The maximum allowed percentage of pixel difference for the "matchesGoldenFile()" calls within your test methods. Must be a value between 0 and 1.\n'''
+      '\n'
+      '          [0] (default)               No pixel difference is allowed.\n'
+      '          [0.01]                      1% of pixels may be different.\n'
+      '          [0.5]                       50% of pixels may be different.\n'
+      '          [1]                         All pixels may be different.\n'
+      '\n'
       '''    --test-randomize-ordering-seed    The seed to randomize the execution order of test cases within test files.\n'''
       '''    --update-goldens                  Whether "matchesGoldenFile()" calls within your test methods should update the golden files.\n'''
       '''    --dart-define=<foo=bar>           Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, int.fromEnvironment, and double.fromEnvironment constructors. Multiple defines can be passed by repeating "--dart-define" multiple times.\n'''
@@ -41,6 +48,7 @@ abstract class FlutterTestCommand {
     bool collectCoverage = false,
     bool optimizePerformance = false,
     double? minCoverage,
+    double? goldenThreshold,
     String? excludeFromCoverage,
     String? randomSeed,
     List<String>? arguments,
@@ -87,6 +95,7 @@ void main() {
           collectCoverage: any(named: 'collectCoverage'),
           optimizePerformance: any(named: 'optimizePerformance'),
           minCoverage: any(named: 'minCoverage'),
+          goldenThreshold: any(named: 'goldenThreshold'),
           excludeFromCoverage: any(named: 'excludeFromCoverage'),
           randomSeed: any(named: 'randomSeed'),
           arguments: any(named: 'arguments'),
@@ -451,6 +460,22 @@ void main() {
         ),
       ).called(1);
       verify(() => logger.err('$exception')).called(1);
+    });
+
+    test('completes normally --golden-threshold 0', () async {
+      when<dynamic>(() => argResults['golden-threshold']).thenReturn('0');
+      final result = await testCommand.run();
+      expect(result, equals(ExitCode.success.code));
+      verify(
+        () => flutterTest(
+          optimizePerformance: true,
+          arguments: defaultArguments,
+          goldenThreshold: 0,
+          logger: logger,
+          stdout: logger.write,
+          stderr: logger.err,
+        ),
+      ).called(1);
     });
 
     test('completes normally --dart-define', () async {
