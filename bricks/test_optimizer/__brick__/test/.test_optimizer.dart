@@ -2,23 +2,28 @@
 // Consider adding this file to your .gitignore.
 
 {{#isFlutter}}import 'dart:io';
+import 'dart:developer';
+import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 {{/isFlutter}}{{^isFlutter}}import 'package:test/test.dart';{{/isFlutter}}
 
 {{#tests}}import '{{{path}}}' as {{identifier}};
 {{/tests}}
 void main() {
-{{#isFlutter}}  goldenFileComparator = _TestOptimizationAwareGoldenFileComparator();{{/isFlutter}}
+{{#isFlutter}}  goldenFileComparator = _TestOptimizationAwareGoldenFileComparator({{{goldenThreshold}}});{{/isFlutter}}
 {{#tests}}  group('{{{path}}}', () { {{identifier}}.main(); });
 {{/tests}}}
 
 {{#isFlutter}}
 class _TestOptimizationAwareGoldenFileComparator extends LocalFileComparator {
   final List<String> goldenFilePaths;
+  final double threshold;
 
-  _TestOptimizationAwareGoldenFileComparator()
-      : goldenFilePaths = _goldenFilePaths,
+  _TestOptimizationAwareGoldenFileComparator(this.threshold)
+      : assert(threshold >= 0 && threshold <= 1),
+        goldenFilePaths = _goldenFilePaths,
         super(_testFile);
 
   static Uri get _testFile {
@@ -40,6 +45,30 @@ class _TestOptimizationAwareGoldenFileComparator extends LocalFileComparator {
     final keyString = key.toFilePath();
     return Uri.parse(goldenFilePaths
         .singleWhere((goldenFilePath) => goldenFilePath.endsWith(keyString)));
+  }
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+
+    if (!result.passed && result.diffPercent <= threshold) {
+      log(
+        'A difference of ${result.diffPercent * 100}% was found, but it is '
+        'acceptable since it is not greater than the threshold of '
+        '${threshold * 100}%',
+      );
+
+      return true;
+    }
+
+    if (!result.passed) {
+      final error = await generateFailureOutput(result, golden, basedir);
+      throw FlutterError(error);
+    }
+    return result.passed;
   }
 }
 {{/isFlutter}}
