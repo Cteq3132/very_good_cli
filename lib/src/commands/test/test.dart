@@ -20,6 +20,7 @@ typedef FlutterTestCommand = Future<List<int>> Function({
   bool collectCoverage,
   bool optimizePerformance,
   double? minCoverage,
+  double? goldenThreshold,
   String? excludeFromCoverage,
   String? randomSeed,
   List<String>? arguments,
@@ -83,6 +84,19 @@ class TestCommand extends Command<int> {
         help: 'Whether to enforce a minimum coverage percentage.',
       )
       ..addOption(
+        'golden-threshold',
+        defaultsTo: '0',
+        allowedHelp: {
+          '0': 'No pixel difference is allowed.',
+          '0.01': '1% of pixels may be different.',
+          '0.5': '50% of pixels may be different.',
+          '1': 'All pixels may be different.',
+        },
+        help: 'The maximum allowed percentage of pixel difference for the '
+            '"matchesGoldenFile()" calls within your test methods. '
+            'Must be a value between 0 and 1.',
+      )
+      ..addOption(
         'test-randomize-ordering-seed',
         help: 'The seed to randomize the execution order of test cases '
             'within test files.',
@@ -140,6 +154,9 @@ This command should be run from the root of your Flutter project.''',
     final minCoverage = double.tryParse(
       _argResults['min-coverage'] as String? ?? '',
     );
+    final goldenThreshold = double.tryParse(
+      _argResults['golden-threshold'] as String? ?? '',
+    );
     final excludeTags = _argResults['exclude-tags'] as String?;
     final tags = _argResults['tags'] as String?;
     final isFlutterInstalled = await _flutterInstalled(logger: _logger);
@@ -164,6 +181,7 @@ This command should be run from the root of your Flutter project.''',
           stderr: _logger.err,
           collectCoverage: collectCoverage || minCoverage != null,
           minCoverage: minCoverage,
+          goldenThreshold: goldenThreshold,
           excludeFromCoverage: excludeFromCoverage,
           randomSeed: randomSeed,
           arguments: [

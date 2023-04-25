@@ -136,6 +136,7 @@ class Flutter {
     bool collectCoverage = false,
     bool optimizePerformance = false,
     double? minCoverage,
+    double? goldenThreshold,
     String? excludeFromCoverage,
     String? randomSeed,
     List<String>? arguments,
@@ -179,7 +180,10 @@ class Flutter {
           final optimizationProgress = logger.progress('Optimizing tests');
           try {
             final generator = await buildGenerator(testRunnerBundle);
-            var vars = <String, dynamic>{'package-root': workingDirectory};
+            var vars = <String, dynamic>{
+              'package-root': workingDirectory,
+              'golden-threshold': goldenThreshold ?? 0,
+            };
             await generator.hooks.preGen(
               vars: vars,
               onVarsChanged: (v) => vars = v,
