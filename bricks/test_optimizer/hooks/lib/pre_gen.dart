@@ -12,6 +12,7 @@ ExitFn exitFn = exit;
 
 Future<void> run(HookContext context) async {
   final packageRoot = context.vars['package-root'] as String;
+  final goldenThreshold = context.vars['golden-threshold'] as double;
   final testDir = Directory(path.join(packageRoot, 'test'));
 
   if (!testDir.existsSync()) {
@@ -41,7 +42,11 @@ Future<void> run(HookContext context) async {
     });
   }
 
-  context.vars = {'tests': testIdentifierTable, 'isFlutter': isFlutter};
+  context.vars = {
+    'tests': testIdentifierTable,
+    'isFlutter': isFlutter,
+    'goldenThreshold': goldenThreshold,
+  };
 }
 
 extension on FileSystemEntity {

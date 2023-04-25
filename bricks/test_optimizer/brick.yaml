@@ -11,3 +11,8 @@ vars:
     default: "."
     description: The path to the package root.
     prompt: Please enter the path to the package root.
+  golden-threshold:
+    type: number
+    description: The threshold for the golden file comparison.
+    default: 0
+    prompt: Please enter the threshold for the golden file comparison.
