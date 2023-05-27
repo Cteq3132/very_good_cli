@@ -23,6 +23,7 @@ typedef FlutterTestCommand = Future<List<int>> Function({
   double? minCoverage,
   String? excludeFromCoverage,
   String? randomSeed,
+  double? goldenThreshold,
   bool? forceAnsi,
   List<String>? arguments,
   void Function(String)? stdout,
@@ -94,6 +95,19 @@ class TestCommand extends Command<int> {
             'should update the golden files.',
         negatable: false,
       )
+      ..addOption(
+        'golden-threshold',
+        defaultsTo: '0',
+        allowedHelp: {
+          '0': 'No pixel difference is allowed.',
+          '0.01': '1% of pixels may be different.',
+          '0.5': '50% of pixels may be different.',
+          '1': 'All pixels may be different.',
+        },
+        help: 'The maximum allowed percentage of pixel difference for the '
+            '"matchesGoldenFile()" calls within your test methods. '
+            'Must be a value between 0 and 1.',
+      )
       ..addFlag(
         'force-ansi',
         defaultsTo: null,
@@ -159,6 +173,9 @@ This command should be run from the root of your Flutter project.''',
         : randomOrderingSeed;
     final optimizePerformance = _argResults['optimization'] as bool;
     final updateGoldens = _argResults['update-goldens'] as bool;
+    final goldenThreshold = double.tryParse(
+      _argResults['golden-threshold'] as String? ?? '',
+    );
     final forceAnsi = _argResults['force-ansi'] as bool?;
     final dartDefine = _argResults['dart-define'] as List<String>?;
 
@@ -175,6 +192,7 @@ This command should be run from the root of your Flutter project.''',
           minCoverage: minCoverage,
           excludeFromCoverage: excludeFromCoverage,
           randomSeed: randomSeed,
+          goldenThreshold: goldenThreshold,
           forceAnsi: forceAnsi,
           arguments: [
             if (excludeTags != null) ...['-x', excludeTags],
